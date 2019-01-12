@@ -1,12 +1,19 @@
-﻿
+﻿#include <stdio.h>
+#include <netdb.h>
+#include <unistd.h>
+#include <stdlib.h>
+#include <string.h>
+#include <strings.h>
 
-#include "head.h"
+#include <netinet/in.h>
+#include <arpa/inet.h>
+#include <sys/types.h>
+#include <sys/socket.h>
+
+
 #include "cJSON.h"
 
-
-/* gcc weather_forecast.c wrap.c -o weather_forecast -I . -I /home/gec/cJSON -L /home/gec/cJSON -lcjson */
- /* （我将cJSON的库放在了家目录中）*/
-int main(int argc,char *argv[])       
+int main(int argc,char *argv[])        /* gcc weather_forecast.c -o weather_forecast -I /home/gec/cJSON -L /home/gec/cJSON -lcjson （我将cJSON的库放在了家目录中）*/
 { 
 	//通过域名获取网络结构体，结构体中有IP信息,域名可以通过阿里云网站获得
 	struct hostent *official = gethostbyname("ali-weather.showapi.com");
@@ -23,19 +30,27 @@ int main(int argc,char *argv[])
 	printf("%s\n",ip);
 	
 	//创建套接字来试图连接服务器
-	int fd = Socket(AF_INET, SOCK_STREAM, 0);
-	
+	int fd = socket(AF_INET, SOCK_STREAM, 0);
+	if(fd == -1)
+	{
+		perror("套接字创建失败！\n");
+		exit(0);
+	}
 	
 	struct sockaddr_in addr;
 	socklen_t len = sizeof(addr);
 	bzero(&addr,len);
 	addr.sin_family = AF_INET;
 	addr.sin_addr = *((struct in_addr *)(official->h_addr_list[0]));     //此时的IP地址需要是长整型的
-	addr.sin_port = htons(80);                                           //HTTP协议端口都是80
+	addr.sin_port = htons(80);             //HTTP协议端口都是80
 	
 	//试图连接服务器····
-	int ret = Connect(fd, (struct sockaddr *)&addr, len);
-	
+	int ret = connect(fd, (struct sockaddr *)&addr, len);
+	if(ret == -1)
+	{
+		perror("连接服务器失败！\n");
+		exit(0);
+	}
 	printf("连接服务器成功！\n");
 	
 	//发送报文给服务器
@@ -44,7 +59,7 @@ int main(int argc,char *argv[])
 	bzero(city,20);
 	fgets(city,20,stdin);     //从键盘输入城市名称
 	
-	/* char buf[500];
+	char buf[500];
 	bzero(buf,500);
 	
     /* 首先在阿里云找一个提供天气预报云服务的API云端，购买服务后进入调试工具，以下的信息就是在里面找到的
@@ -53,27 +68,24 @@ int main(int argc,char *argv[])
 	HTTP/1.1 指的是HTTP协议
 	ali-weather.showapi.com   是提供服务的云端的域名
 	17e8b5a89e2544b289d4ad1a2fee4052 购买后可在购物车或者管理控制台找到 
-	因为从键盘输入的city变量中含有\n字符，所以用strtok（）函数将\n去掉 
+	因为从键盘输入的city变量中含有\n字符，所以用strtok（）函数将\n去掉 */
 	
 	snprintf(buf, 500, "GET /spot-to-weather?area=%s HTTP/1.1\r\n"			
 						"Host: ali-weather.showapi.com\r\n"
 						"Authorization:APPCODE 17e8b5a89e2544b289d4ad1a2fee4052\r\n\r\n",
 						strtok(city,"\n"));
 						
-	printf("要发送的报文%s\n",buf); */
+	printf("要发送的报文%s\n",buf);
 	
-	char *req = http_request(city);
-	printf("要发送的报文%s\n",req);
-	
+	char *req = buf;
 	int req_len = strlen(req);
-	Write(fd, req, req_len);        //从套接字中写入请求报文
-	/* int m;
-	while(req_len > 0)              
+	int m;
+	while(req_len > 0)              //不断地从套接字中写入请求报文
 	{
 		m = write(fd, req, req_len);
 		req_len -= m;
 		req += m;
-	} */
+	}
 	printf("发送报文成功！\n");
 	
 	//等待服务器回应，然后读取头部内容数据
@@ -88,7 +100,7 @@ int main(int argc,char *argv[])
 		if(strstr(response, "\r\n\r\n"))       //找到\r\n\r\n后，此时response就停在\r\n\r\n所在地址，因为此地址后面，就是头部信息
 			break;
 		
-	} 
+	}
 	printf("响应头部：%s\n",response);
 	
 	//从头部信息中获取长度信息
@@ -109,16 +121,14 @@ int main(int argc,char *argv[])
 	
 	//读取最终的JSON信息
 	char *json = calloc(1,json_len);   /* *json的大小一定要根据cJSON长度来定义，否则cJSON *root = cJSON_Parse(json)可能会出错 */
-	                
-	json = Read(fd, json, json_len);
-					
-	/* int total = 0;
+	                                   
+	int total = 0;
 	while(json_len > 0)
 	{
 		int n = read(fd, json+total, json_len);      //不断地从套接字中读取cJSON信息
 		json_len -= n;
 		total += n;
-	} */
+	}
 	printf("JSON:%s\n",json);
 	
 	//从JSON筛选出自己需要的信息
