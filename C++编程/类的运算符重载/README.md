@@ -21,4 +21,4 @@ ostream&   指的是引用
 	为了支持连续，输出必须返回一个ostream的引用，这样，“<<”就可以连续输出
 
     <<		ostream& operator <<(ostream& out, complex &num)
-    >>		ostream& operator >>(ostream& out, complex &num)
+    >>		ostream& operator >>(ostream& out, complex &num)  
