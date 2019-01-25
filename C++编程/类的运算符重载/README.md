@@ -8,13 +8,14 @@ operator是C++中的关键字，（又称重载操作符），和运算符一起
 	举个例子：我们想要比较两个人的年龄大小，首先定义person这个类，判断的依据是person中的age，用到的操作符是==，这时候“==”操作符已经跟标准库隔离开了，如果直接使用，编译器就会报错说“==”没有定义。
 	所以才需要用到操作符重载，原因就是编译器在是是实现的时候，已经提供了“==”这个操作符并规定好了功能，你想用一摸一样的操作符，并且让它成为用户自定义的class中的内部成员，实现的方法就是操作符重载。
 
-   运算符                 函数重载
-     + 		complex operator+(complex &num)    complex是类名，&num是另一个操作数的地址
-     -		complex operator-(complex &num)
-     *		complex operator*(complex &num)
-     /		complex operator/(complex &num)
+   运算符  +   -    *   /     对应的函数重载分别如下：          
+  
+     complex operator+(complex &num)   
+     complex operator-(complex &num)
+     complex operator*(complex &num)
+     complex operator/(complex &num)
 
-
+ complex是类名，&num是另一个操作数的地址
 
 ostream&   指的是引用
 	为了支持连续，输出必须返回一个ostream的引用，这样，“<<”就可以连续输出
