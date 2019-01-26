@@ -48,23 +48,37 @@ public:
 private:
         int real;        //代表虚数的实部
         int image;		 //代表虚数的虚部
-        friend ostream& operator << (ostream& out, complex &c);  //将“<<”函数重载声明为类的友元函数，这样此函数重载就可以使用类中的成员
-
+        friend ostream& operator << (ostream& out, complex &num);  //将“<<”函数重载声明为类的友元函数，这样此函数重载就可以使用类中的成员
+        friend ostream& operator >>(ostream& in, complex &num);
 };
 
-ostream& operator <<(ostream& out, complex &num)
+ostream& operator <<( ostream& out, complex &num)
 {
     out<<"["<<num.real<<","<<num.image<<"]"<<endl;      //xxx.real和xxx.image都是类中的成员，因为此函数被声明为类的友元函数，所以可以使用类中的成员
     return out;
 }
 
-
+ostream& operator >>(ostream& in, complex &num)
+{
+    in<<"["<<num.real<<","<<num.image<<"]"<<endl;
+    return in;
+}
 
 int main(int argc, char *argv[])
 {
+    int real1,image1;
+    int real2,image2;
 
-    complex A(4,6);
-    complex B(2,3);
+     printf("==============输入输出流函数重载==================\n");
+
+    cout<<"input the first complex"<<endl;
+    cin>>real1>>image1;
+
+    cout<<"input the second complex"<<endl;
+    cin>>real2>>image2;
+
+    complex A(real1, image1);
+    complex B(real2, image2);
 
     printf("==============加减乘除函数重载==================\n");
     complex ADD = A+B;  //相当于A.operator+(B)
@@ -81,6 +95,7 @@ int main(int argc, char *argv[])
 
     printf("==============输出流函数重载==================\n");
     cout<<A<<B<<ADD<<SUB<<MUL<<DIV<<endl;
+
 
     return 0;
 }
