@@ -18,6 +18,7 @@ int main(int argc, char *argv[])
     w.show();
 
     //将信号与槽函数进行关联
+    //信号与槽函数进行关联后，当按下按钮，信号就会发送，被关联的槽函数就会自动执行close()关闭窗口函数
     QObject::connect(&bt1, SIGNAL(clicked(bool)),&w, SLOT(close()));
 
 
