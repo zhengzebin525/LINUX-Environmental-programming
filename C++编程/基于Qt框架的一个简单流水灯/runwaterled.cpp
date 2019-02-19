@@ -20,7 +20,7 @@ RunWaterLED::RunWaterLED(QWidget *parent) :
         mtime.setInterval(1000);
 
         //将定时器和槽函数关联起来
-        connect(&mtime,SIGNAL(timeout()),this,SLOT(LedWork()));  //LedWork()不能用传参
+        connect(&mtime,SIGNAL(timeout()),this,SLOT(LedWork()));  
 
 }
 
