@@ -1,0 +1,426 @@
+#include "weatherquery.h"
+#include "ui_weatherquery.h"
+#include <QJsonObject>
+#include <QJsonArray>
+#include <QJsonValue>
+#include <QJsonDocument>
+#include <QJsonParseError>
+#include <QTime>
+#include <QDate>
+#include <QFile>
+#include <QPainter>
+#include <QDebug>
+
+WeatherQuery::WeatherQuery(QWidget *parent) :
+    QMainWindow(parent),
+    ui(new Ui::WeatherQuery)
+{
+    ui->setupUi(this);
+
+    ui->softkeywidget->hide();     //将软键盘隐藏起来
+
+    //给输入框安装事件过滤器
+    ui->InputLineEdit->installEventFilter(this);
+
+    QString rollstr = "你好，这是天气查询显示平台";
+    ui->rollwidget->setRollStr(rollstr);
+
+
+
+
+    this->setStyleSheet("QMainWindow{background-image: url(:/new/prefix1/images/UI.png)}");
+
+//显示系统时间
+    //启动定时器
+    mtime.start();
+    //设置定时时间
+    mtime.setInterval(1000);
+    //将定时器信号与槽函数向关联，每1s执行依次槽函数
+    connect(&mtime,SIGNAL(timeout()),this,SLOT(update_time()));
+
+//获取cJSON数据
+    //管理器manager发送报文后就执行槽函数
+    connect(&manager,SIGNAL(finished(QNetworkReply*)),this,SLOT(read_cjson(QNetworkReply*)));
+
+    //发送报文
+    QUrl url("http://wthrcdn.etouch.cn/weather_mini?citykey=101280101");
+    QNetworkRequest request(url);
+    manager.get(request);
+
+
+    //打开文件对照表
+    QFile file("citykeys.txt");
+    if(!file.open(QIODevice::ReadOnly))
+    {
+        qDebug()<<"对照表打开失败";
+    }
+    qDebug()<<"对照表打开成功";
+    QByteArray array;           //定义一个数组
+    while(!file.atEnd())        //判断文件是否到了尾部
+    {
+        QByteArray tmp = file.read(1024);    //从文件中读取1024个字节放在数组tmp中
+        array.append(tmp);                   //将数组tmp的内容接在数组array之后
+    }
+    file.close();                           //用完了就关闭文件
+    //qDebug()<<QString(array);   //打印不出来,qDebug不能一次性打印太多数据，不然会打印不出来
+    QString cityname = array;     //将数组中的内容用字符串变量cityname接住
+    QStringList citynamelist = cityname.split(",");  //将cityname中得数据分段，按”，“来分成一段一段
+    //qDebug()<<citynamelist.at(0);
+    for(int i=0;i<citynamelist.count();i++)
+    {
+        QString citycn = citynamelist.at(i);
+        citycn.remove("\"");
+        //qDebug()<<citycn;
+
+        QStringList idname = citycn.split(":");
+
+        Citys[idname.at(1)] = idname.at(0);     //就将城市与ID对应关系放在了容器MAP中
+    }
+
+    //QString saa = "广州";
+    //qDebug()<<Citys[saa];
+
+}
+
+WeatherQuery::~WeatherQuery()
+{
+    delete ui;
+}
+
+void WeatherQuery::update_time()
+{
+    //获取当前系统年月日
+    QString System_Date = QDate::currentDate().toString("yyyy-MM-dd");
+    ui->DateLcdNumber->display(System_Date);
+    qDebug()<<System_Date;
+
+    //获取当前系统时分秒
+    QString System_Time = QTime::currentTime().toString("hh:mm:ss");
+    ui->TimeLcdNumber->display(System_Time);
+    qDebug()<<System_Time;
+}
+
+
+QString WeatherQuery::WeatherType(QString intype)
+{
+    QString typemsg;
+    if(intype == "晴")
+    {
+       typemsg =  "image: url(:/new/prefix1/images/晴.png)";
+    }
+
+    if(intype == "阴")
+    {
+        typemsg = "image: url(:/new/prefix1/images/阴.png)";
+    }
+
+
+    if(intype == "霾")
+    {
+        typemsg = "image: url(:/new/prefix1/images/霾.png)";
+    }
+
+    if(intype == "雾")
+    {
+        typemsg = "image: url(:/new/prefix1/images/雾.png)";
+    }
+
+
+    if(intype == "多云")
+    {
+        typemsg = "image: url(:/new/prefix1/images/多云.png)";
+    }
+
+    if(intype == "浮尘")
+    {
+        typemsg = "image: url(:/new/prefix1/images/浮尘.png)";
+    }
+
+    if(intype == "小雨"||"小到中雨")
+    {
+        typemsg = "image: url(:/new/prefix1/images/小雨.png)";
+    }
+
+    if(intype == "中雨"||"中到大雨")
+    {
+        typemsg = "image: url(:/new/prefix1/images/中雨.png)";
+    }
+
+    if(intype == "阵雨")
+    {
+        typemsg = "image: url(:/new/prefix1/images/阵雨.png)";
+    }
+
+    if(intype == "大雨")
+    {
+        typemsg = "image: url(:/new/prefix1/images/大雨.png)";
+    }
+
+    if(intype == "雷阵雨")
+    {
+        typemsg = "image: url(:/new/prefix1/images/雷阵雨.png)";
+    }
+
+    if(intype == "雨夹雪")
+    {
+        typemsg = "image: url(:/new/prefix1/images/雨夹雪.png)";
+    }
+
+    if(intype == "雷阵雨伴有冰雹")
+    {
+        typemsg = "image: url(:/new/prefix1/images/雷阵雨伴有冰雹.png)";
+    }
+
+    if(intype == "暴雨")
+    {
+        typemsg = "image: url(:/new/prefix1/images/暴雨.png)";
+    }
+
+    if(intype == "冻雨")
+    {
+        typemsg = "image: url(:/new/prefix1/images/冻雨.png)";
+    }
+
+    if(intype == "大暴雨")
+    {
+        typemsg = "image: url(:/new/prefix1/images/大暴雨.png)";
+    }
+
+    if(intype == "特大暴雨")
+    {
+        typemsg = "image: url(:/new/prefix1/images/特大暴雨.png)";
+    }
+
+    if(intype == "小雪")
+    {
+        typemsg = "image: url(:/new/prefix1/images/小雪.png)";
+    }
+
+    if(intype == "阵雪")
+    {
+        typemsg = "image: url(:/new/prefix1/images/阵雪.png)";
+    }
+
+    if(intype == "中雪")
+    {
+        typemsg = "image: url(:/new/prefix1/images/中雪.png)";
+    }
+
+    if(intype == "大雪")
+    {
+        typemsg = "image: url(:/new/prefix1/images/大雪.png)";
+    }
+
+    if(intype == "暴雪")
+    {
+        typemsg = "image: url(:/new/prefix1/images/暴雪.png)";
+    }
+
+    if(intype == "扬沙")
+    {
+        typemsg = "image: url(:/new/prefix1/images/扬沙.png)";
+    }
+
+
+    if(intype == "强沙尘暴")
+    {
+        typemsg = "image: url(:/new/prefix1/images/强沙尘暴.png)";
+    }
+
+    return typemsg;
+
+}
+
+
+void WeatherQuery::read_cjson(QNetworkReply *reply)
+{
+
+    QString buf = reply->readAll();    //先把cJOSN数据放入一个缓冲区buf中，定义为字符串类型
+
+    //判断是否为cjson数据
+    QJsonParseError err;
+                                               //将buf中的数据转换为UTF-8供系统识别
+    QJsonDocument doc = QJsonDocument::fromJson(buf.toUtf8(),&err);
+    if(err.error != QJsonParseError::NoError)
+    {
+        qDebug()<<"格式错误";
+        return ;
+    }
+
+    qDebug()<<"应答CJSON格式正确";              //到了这一步，说明接收回来的cJOSn数据格式是正确的
+
+    QJsonObject obj = doc.object();  //用obj这个量来指向命名cJOSN数据的根，以后要找根目录，就找obj就可以了
+
+    QJsonObject data = obj.value("data").toObject();    //在obj根目录下找到“data”第一子根，用data指向命名
+
+    city = data.value("city").toString();   //在data第一子根中找到“city”，用city来指向命名
+                                            //toString()的作用就是把city中的数据用字符串类型提取出来
+
+    //显示城市
+    ui->CityLabel->setText(city);     //将字符串city中的城市信息在ui界面上的Label控件中显示出来
+
+    QJsonArray forecast = data.value("forecast").toArray();  //用一个数组来指向命名“forecase”第二子根
+
+    QJsonObject zero = forecast.at(0).toObject();       //在“forecase”中找到第0号元素
+
+    date = zero.value("date").toString();       //在第0号元素中提示“data”中字符串出来，将日期字符串放在data变量中
+
+    ganmao = data.value("ganmao").toString();
+
+    temperature = data.value("wendu").toString();
+    temperature += "℃";
+
+    //显示温度
+    ui->TemperatureLabel->setText(temperature);
+
+    ui->IndexLabel->setText("感冒指数");
+    ui->IndexLabel->setWordWrap(1);      //自动换行
+
+    //温馨提示
+    ui->GanmaoLabel->setText(ganmao);
+    ui->GanmaoLabel->setWordWrap(1);                //开启自动换行
+    ui->GanmaoLabel->setAlignment(Qt::AlignLeft);    //设置对齐方式
+
+//今天的天气
+    high = zero.value("high").toString();  
+    low = zero.value("low").toString();
+    fengxiang = zero.value("fengxiang").toString();
+    type = zero.value("type").toString();
+    fengli = zero.value("fengli").toString();
+    fengli.remove("<![CDATA[");
+    fengli.remove("]]>");
+
+    ui->FengxiangLabel->setText(fengxiang);
+    ui->TodayLabel->setText("今天");
+    ui->TodayHIghLabel->setText(high);
+    ui->TodayLowLabel->setText(low);
+    ui->TodayTypeText->setText(type);
+    ui->FengliLabel->setText(fengli);
+
+    QString typemsg = WeatherQuery::WeatherType(type);
+    ui->TodayTypeLabel->setStyleSheet(typemsg);
+
+
+//昨天的天气
+    QJsonObject yesterday = data.value("yesterday").toObject();
+    date = yesterday.value("date").toString();
+    high = yesterday.value("high").toString();
+    low = yesterday.value("low").toString();
+    type = yesterday.value("type").toString();
+
+    ui->YesterdayLabel->setText(date);
+    ui->YesterdayHighLabel->setText(high);
+    ui->YesterdayLowLabel->setText(low);
+    ui->YesterdayTypeText->setText(type);
+
+    typemsg = WeatherQuery::WeatherType(type);
+    ui->YesterdayTypeLabel->setStyleSheet(typemsg);
+
+
+
+//明天的天气
+    QJsonObject one = forecast.at(1).toObject();
+    date = one.value("date").toString();
+    high = one.value("high").toString();
+    low = one.value("low").toString();
+    type = one.value("type").toString();
+
+    ui->TomorrowLabel->setText(date);
+    ui->TomorrowHIghLabel->setText(high);
+    ui->TomorrowLowLabel->setText(low);
+    ui->TomorrowTypeText->setText(type);
+
+    typemsg = WeatherQuery::WeatherType(type);
+    ui->TomorrowTypeLabel->setStyleSheet(typemsg);
+
+
+//后天天气
+    QJsonObject two = forecast.at(2).toObject();
+    date = two.value("date").toString();
+    high = two.value("high").toString();
+    low = two.value("low").toString();
+    type = two.value("type").toString();
+
+    ui->AfterTomorrowLabel->setText(date);
+    ui->AfterTomorrowHIghLabel->setText(high);
+    ui->AfterTomorrowLowLabel->setText(low);
+    ui->AfterTomorrowTypeText->setText(type);
+
+    typemsg = WeatherQuery::WeatherType(type);
+    ui->AfterTomorrowTypeLabel->setStyleSheet(typemsg);
+
+}
+
+
+//更换背景皮肤
+void WeatherQuery::on_SkinBt_clicked()
+{
+    static int num = 0;
+    num++;
+
+    if(num == 6)
+        num = 1;
+
+    switch(num%9)
+    {
+    case 1:
+            this->setStyleSheet("QMainWindow{background-image: url(:/new/prefix1/images/UI1.png)}");
+            break;
+    case 2:
+            this->setStyleSheet("QMainWindow{background-image: url(:/new/prefix1/images/UI2.png)}");
+            break;
+    case 3:
+            this->setStyleSheet("QMainWindow{background-image: url(:/new/prefix1/images/UI3.jpg)}");
+            break;
+    case 4:
+            this->setStyleSheet("QMainWindow{background-image: url(:/new/prefix1/images/UI4.jpg)}");
+            break;
+    case 5:
+            this->setStyleSheet("QMainWindow{background-image: url(:/new/prefix1/images/UI5.jpg)}");
+            break;
+
+    }
+
+}
+
+void WeatherQuery::on_CheckBt_clicked()
+{
+    QString cityname = ui->InputLineEdit->text();  //获取我们在输入框中的内容
+    qDebug()<<cityname;     //可打印出来，看看我们在输入框输入的城市名字有没有被获取到
+    QString cityid = Citys[cityname];//可根据获取到的城市名字得到对应的城市ID
+    qDebug()<<"城市id:"<<cityid;
+
+    QString requesttion = "http://wthrcdn.etouch.cn/weather_mini?citykey=";
+    requesttion += cityid;   //在上面的网址中追加一个城市ID号
+    qDebug()<<requesttion;   //可将要发出去的网址信息打印出来看看对不对
+
+    //发送报文
+    QUrl url(requesttion);     //当一发送报文，就会产生finished()信号，
+                               //执行read_cjson(QNetworkReply*)函数
+                               //解析CJOSON数据，更新ui界面天气指数信息
+
+    QNetworkRequest request(url);
+    manager.get(request);
+
+}
+
+//第一个参数是选择哪个过滤器进来，但是因为我们只在lineEdit中加入了过滤器，所以进来的只有一种过滤器
+bool WeatherQuery::eventFilter(QObject *watched, QEvent *event)
+{
+    if(event->type() == QEvent::FocusIn)  //判断过滤器是否获取了焦点，即判断鼠标是否点进了lineEdit里面
+    {
+        ui->softkeywidget->show();
+    }
+
+    if(event->type() == QEvent::FocusOut)    //焦点移出，就隐藏软键盘
+    {
+        ui->softkeywidget->hide();
+    }
+
+    return QMainWindow::eventFilter(watched,event);
+}
+
+void WeatherQuery::on_CloseBt_clicked()
+{
+    this->hide();
+}

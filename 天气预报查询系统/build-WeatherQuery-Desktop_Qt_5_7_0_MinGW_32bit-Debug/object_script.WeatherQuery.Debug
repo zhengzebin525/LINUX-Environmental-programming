@@ -1,0 +1,12 @@
+INPUT(
+./debug\main.o
+./debug\weatherquery.o
+./debug\rolltest.o
+./debug\keybutton.o
+./debug\softkey.o
+./debug\qrc_image.o
+./debug\moc_weatherquery.o
+./debug\moc_rolltest.o
+./debug\moc_keybutton.o
+./debug\moc_softkey.o
+);

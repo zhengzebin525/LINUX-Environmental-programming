@@ -1,0 +1,12 @@
+INPUT(
+./release\main.o
+./release\weatherquery.o
+./release\rolltest.o
+./release\keybutton.o
+./release\softkey.o
+./release\qrc_image.o
+./release\moc_weatherquery.o
+./release\moc_rolltest.o
+./release\moc_keybutton.o
+./release\moc_softkey.o
+);

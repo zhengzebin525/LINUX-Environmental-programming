@@ -1,0 +1,45 @@
+<RCC>
+    <qresource prefix="/new/prefix1">
+        <file>images/icon.ico</file>
+        <file>images/UI.png</file>
+        <file>images/UI1.png</file>
+        <file>images/UI2.png</file>
+        <file>images/UI3.jpg</file>
+        <file>images/UI3.png</file>
+        <file>images/UI4.jpg</file>
+        <file>images/UI4.png</file>
+        <file>images/UI5.jpg</file>
+        <file>images/UI5.png</file>
+        <file>images/update.png</file>
+        <file>images/update_on.png</file>
+        <file>images/暴雪.png</file>
+        <file>images/暴雨.png</file>
+        <file>images/查找.png</file>
+        <file>images/大暴雨 .png</file>
+        <file>images/大雪.png</file>
+        <file>images/大雨.png</file>
+        <file>images/冻雨.png</file>
+        <file>images/多云.png</file>
+        <file>images/浮尘.png</file>
+        <file>images/关闭按钮.png</file>
+        <file>images/关闭按钮1.png</file>
+        <file>images/雷阵雨.png</file>
+        <file>images/雷阵雨伴有冰雹.png</file>
+        <file>images/霾.png</file>
+        <file>images/强沙尘暴.png</file>
+        <file>images/晴.png</file>
+        <file>images/特大暴雨.png</file>
+        <file>images/雾.png</file>
+        <file>images/小雪.png</file>
+        <file>images/小雨.png</file>
+        <file>images/扬沙.png</file>
+        <file>images/阴.png</file>
+        <file>images/雨夹雪.png</file>
+        <file>images/阵雪.png</file>
+        <file>images/阵雨.png</file>
+        <file>images/中雪.png</file>
+        <file>images/中雨.png</file>
+        <file>images/最小化.png</file>
+        <file>images/最小化1.png</file>
+    </qresource>
+</RCC>
