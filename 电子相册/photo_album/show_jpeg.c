@@ -1,5 +1,23 @@
 #include "show_jpeg.h"
 
+char *init_lcd(struct fb_var_screeninfo *vinfo)
+{
+	int lcd = open("/dev/fb0", O_RDWR);
+
+	ioctl(lcd, FBIOGET_VSCREENINFO, vinfo);
+	int bpp = vinfo->bits_per_pixel;
+	int screensize = vinfo->xres * vinfo->yres * bpp/8;
+
+	char *fbmem = mmap(NULL, screensize, PROT_READ|PROT_WRITE,
+			   MAP_SHARED, lcd, 0);
+	if(fbmem == MAP_FAILED)
+	{
+		perror("映射显存失败");
+		exit(0);
+	}
+	return fbmem;
+}
+
 // 将jpeg文件的压缩图像数据读出，放到jpg_buffer中去等待解压
 unsigned long read_image_from_file(int fd,
 				   unsigned char *jpg_buffer,

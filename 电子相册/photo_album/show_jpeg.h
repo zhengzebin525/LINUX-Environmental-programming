@@ -1,5 +1,5 @@
 #ifndef __SHOW_JPEG_H
-#define _SHOW_JPEG_H
+#define __SHOW_JPEG_H
 
 
 #include <stdio.h>
@@ -31,6 +31,7 @@ struct image_info
 	int pixel_size;
 };
 
+char *init_lcd(struct fb_var_screeninfo *vinfo);
 
 // 将jpeg文件的压缩图像数据读出，放到jpg_buffer中去等待解压
 unsigned long read_image_from_file(int fd,
